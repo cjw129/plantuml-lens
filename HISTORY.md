@@ -5,6 +5,8 @@ All notable changes to **PlantUML Lens** are documented here.
 ## 0.4.0
 
 - **Renamed to PlantUML Lens** (was PlantUML for GitHub) and now a Chrome only extension: the Firefox build and the `template/` generator are gone, the extension source lives in `extension/`. The release asset is `plantuml-lens.zip`.
+- **Security:** messages are only accepted from the renderer frames the extension created (a foreign sandboxed frame shares the opaque origin and could answer a pending copy or resize the frames), only the embedding page drives the renderer, and the renderer page has a Content-Security-Policy without network access, so a diagram can no longer request a remote URL.
+- **Fixed:** on `file://` pages the renderer could not report the diagram height (the origin `null` is not a valid `postMessage` target), so diagrams were clipped. A block that Markdown Lens already rendered is no longer rendered a second time.
 
 - **Options page to manage the sites where diagrams are rendered.** The
   built-in sites (GitHub, GitHub Enterprise Cloud, local files) can be

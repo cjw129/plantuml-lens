@@ -21,6 +21,12 @@ TRACE('render import =', typeof render);
 const output = document.getElementById('plantuml-output');
 TRACE('output element =', output);
 
+// The origin of a file:// page is the string "null", which is not a valid
+// postMessage target. The reply goes to the embedding page (event.source is
+// checked to be window.parent), so '*' is used for such a page.
+function replyOrigin(event) {
+  return event.origin && event.origin !== 'null' ? event.origin : '*';
+}
 // We accept messages from any origin because the iframe is sandboxed
 // (sandbox="allow-scripts") and the parent's origin is opaque ("null")
 // from our perspective. We protect ourselves by validating the message
@@ -61,7 +67,7 @@ window.addEventListener('message', (event) => {
           type: 'PLANTUML_BITMAP_RESULT',
           requestId: data.requestId,
           blob
-        }, event.origin);
+        }, replyOrigin(event));
       })
       .catch((err) => {
         TRACE('svgToPngBlob rejected:', err);
@@ -69,7 +75,7 @@ window.addEventListener('message', (event) => {
           type: 'PLANTUML_BITMAP_ERROR',
           requestId: data.requestId,
           error: String(err && err.message ? err.message : err)
-        }, event.origin);
+        }, replyOrigin(event));
       });
     return;
   }
@@ -91,14 +97,14 @@ window.addEventListener('message', (event) => {
         type: 'PLANTUML_SVG_RESULT',
         requestId: data.requestId,
         svg: svgString
-      }, event.origin);
+      }, replyOrigin(event));
     } catch (err) {
       TRACE('serializeSvg failed:', err);
       event.source.postMessage({
         type: 'PLANTUML_SVG_ERROR',
         requestId: data.requestId,
         error: String(err && err.message ? err.message : err)
-      }, event.origin);
+      }, replyOrigin(event));
     }
     return;
   }
@@ -131,7 +137,7 @@ window.addEventListener('message', (event) => {
         requestId,
         svg,
         height
-      }, event.origin);
+      }, replyOrigin(event));
     })
     .catch((err) => {
       TRACE('renderDiagram rejected:', err);
@@ -139,7 +145,7 @@ window.addEventListener('message', (event) => {
         type: 'PLANTUML_ERROR',
         requestId,
         error: String(err && err.message ? err.message : err)
-      }, event.origin);
+      }, replyOrigin(event));
     });
 });
 TRACE('message listener attached');

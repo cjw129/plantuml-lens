@@ -174,6 +174,9 @@
     const sel4 = [];
     root.querySelectorAll('pre').forEach((pre) => {
       if (pre.classList.contains(PROCESSED_CLASS)) return;
+      // Markdown Lens renders PlantUML itself and leaves the (hidden) source
+      // in the block, do not render it a second time.
+      if (pre.classList.contains('plantuml-diagram')) return;
       if (pre.matches(preLangSelector)) return;
       if (pre.closest(wrapperSelector)) return;
       if (pre.querySelector(anyLangCodeSelector)) return; // already labeled with some language
