@@ -1382,14 +1382,14 @@
   }
 
   // ------------------------------------------------------------------
-  // file:// coexistence with Markdown Viewer.
+  // file:// coexistence with Markdown Lens.
   //
   // For a local .md file, Chrome shows the raw text in a lone <pre> and
-  // Markdown Viewer then replaces the whole <body> with its rendered
+  // Markdown Lens then replaces the whole <body> with its rendered
   // output. If we scanned immediately we would race with it: we could
   // process the raw <pre> (and lose the work when it is wiped), or miss
   // the rendered blocks. So on a file:// page that still looks like a
-  // plain-text view, hold off until Markdown Viewer has mounted its
+  // plain-text view, hold off until Markdown Lens has mounted its
   // #_html / #_markdown container (or the original <pre> is gone) and
   // has run its post-render passes, then start. If it never shows up
   // (not installed, or the file is not handled), fall back to starting
@@ -1398,7 +1398,7 @@
   const MV_SETTLE_MS = 150;   // > MV's Prism/Mermaid/MathJax timers (20/40/60 ms)
   const MV_TIMEOUT_MS = 3000;
 
-  function whenMarkdownViewerDone(start) {
+  function whenMarkdownLensDone(start) {
     const body = document.body;
     const rawPre = body && body.children.length === 1 &&
       body.firstElementChild.tagName === 'PRE' ? body.firstElementChild : null;
@@ -1419,7 +1419,7 @@
     const check = () => {
       if (settleTimer) return;
       if (!rawPre.isConnected || document.getElementById('_html') || document.getElementById('_markdown')) {
-        TRACE('Markdown Viewer detected; starting after settle delay');
+        TRACE('Markdown Lens detected; starting after settle delay');
         settleTimer = setTimeout(go, MV_SETTLE_MS);
       }
     };
@@ -1518,5 +1518,5 @@
     }
   }
 
-  whenSiteEnabled(() => whenMarkdownViewerDone(start));
+  whenSiteEnabled(() => whenMarkdownLensDone(start));
 })();
