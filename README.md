@@ -1,18 +1,25 @@
-# PlantUML for GitHub
+# PlantUML Lens
 
-A Chrome extension that renders ` ```plantuml ` code blocks and standalone `.puml` files directly on GitHub pages, using the TeaVM-compiled PlantUML engine that runs entirely client-side.
+A Chrome extension that renders `plantuml` code blocks and standalone `.puml` files on GitHub, on local files and on the sites you add, using a TeaVM-compiled PlantUML engine that runs entirely in your browser.
 
 **No server. No tokens. No tracking. Minimal permissions.**
 
-## Installation
+It works next to [Markdown Lens](https://github.com/cjw129/markdown-lens): on a `file://` Markdown page the diagrams are rendered once Markdown Lens has finished.
 
-- From the [Chrome Web Store](https://chromewebstore.google.com/detail/plantuml-for-github/lbokhidfopkdehkmlmpaabacljoediic)
-- From the [Firefox Add-ons Catalog](https://addons.mozilla.org/en-US/firefox/addon/plantuml-for-github/)
+> Not affiliated with the PlantUML project. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for the components that are bundled.
 
+## Install
+
+1. Download `plantuml-lens.zip` from the [releases](https://github.com/cjw129/plantuml-lens/releases) page and extract it, or build it yourself (see [Build](#build)), or use the `extension/` folder of this repository as is
+2. Open `chrome://extensions` and turn on **Developer mode**
+3. Click **Load unpacked** and select the extracted folder (the one that contains `manifest.json`)
+4. For local files turn on **Allow access to file URLs** on the extension's page in `chrome://extensions`
+
+Reload the extension after you update the folder.
 
 ## Live demo
 
-With the extension installed and active, the block below should render as a sequence diagram:
+With the extension active, the block below renders as a sequence diagram:
 
 ```plantuml
 @startuml
@@ -23,74 +30,55 @@ Bob --> Alice: hi
 
 ## How it works
 
-1. The extension's content script scans every GitHub page for `plantuml` code blocks. Blocks with no language marker at all (a languageless ` ``` ` fence, or an AsciiDoc `[plantuml]` listing block, which GitHub renders without the `asciidoctor-diagram` extension) are still recognized, by matching PlantUML's own `@startuml` / `@enduml` delimiters in the text.
+1. The content script scans the page for `plantuml` code blocks. Blocks with no language marker (a languageless fence, or an AsciiDoc `[plantuml]` listing block) are recognized too, by their `@startuml` / `@enduml` delimiters. The `puml` and `wsd` languages are accepted as aliases.
 2. Each block is replaced with a sandboxed `<iframe>` packaged inside the extension.
-3. The iframe loads the TeaVM-compiled `plantuml.js` engine and renders the diagram to SVG.
-4. The result is displayed inline in the page, inside a small wrapper with a header bar.
-5. The header bar shows a **toggle button** (top-left of the wrapper) that switches between the rendered diagram and the original PlantUML source. The source view uses GitHub's own syntax highlighting, so it looks exactly as it would without the extension installed.
-6. Standalone PlantUML files (`.puml`, `.plantuml`, `.pu`, `.wsd`) opened on GitHub's file view are rendered the same way, in place of the code. The toggle button switches to GitHub's own code view (line numbers, highlighting) and back. The source is read from the page itself, so private repositories work too.
+3. The iframe loads the engine (`extension/vendor/plantuml.js`) and renders the diagram to SVG. The diagram follows the light or dark mode of the page.
+4. The result is shown inline in a wrapper with a header bar: a toggle between the diagram and the original source (rendered with the site's own highlighting), copy as SVG, source or bitmap, and an editor.
+5. Standalone `.puml`, `.plantuml`, `.pu` and `.wsd` files on GitHub's file view are rendered in place of the code, with a toggle back to GitHub's own code view. The source is read from the page itself, so private repositories work too.
 
-This is the same architecture GitHub already uses for Mermaid — proving that client-side PlantUML can be integrated natively with zero infrastructure cost.
+Comments or a license header before `@startuml` (or after `@enduml`) are allowed, only the `@startXXX ... @endXXX` part is sent to the engine.
+
+The standard library is bundled, so `!include <lib/...>` works for every library the project site publishes (C4, AWS, Azure, GCP, Kubernetes, Material, ...), as do emoji (`<:1f600:>`), `!theme` and OpenIconic (`<&icon>`).
 
 ## Sites
 
-Open the options page (Chrome: `chrome://extensions` -> PlantUML for GitHub ->
-Details -> Extension options; Firefox: Add-ons -> PlantUML for GitHub ->
-Preferences) to choose where diagrams are rendered:
+Open the options page (`chrome://extensions` -> PlantUML Lens -> Details -> Extension options) to choose where diagrams are rendered:
 
 - **Built-in sites** (GitHub, GitHub Enterprise Cloud, local files) can be turned off.
-- **Your sites** adds any other site that shows `plantuml` code blocks, for
-  example a self-hosted GitLab or Gitea, or a documentation site. Type an
-  address (`gitlab.example.com`, `https://gitlab.example.com`,
-  `*.example.com`, `http://localhost:3000`), accept the browser's permission
-  prompt, and reload the site. A site that has a port needs `http://` or
-  `https://` in front of it. Remove the site to remove the permission.
+- **Your sites** adds any other site that shows `plantuml` code blocks, for example a self-hosted GitLab or Gitea, or a documentation site. Type an address (`gitlab.example.com`, `https://gitlab.example.com`, `*.example.com`, `http://localhost:3000`), accept the browser's permission prompt and reload the site. A site that has a port needs `http://` or `https://` in front of it. Removing the site removes the permission.
 
-Local files also need the **Allow access to file URLs** switch on the
-extension's page in `chrome://extensions`.
+On the sites you add the extension looks for the same code blocks it uses on GitHub. The standalone `.puml` file view is GitHub only.
 
-On the sites you add, the extension looks for the same code blocks it uses on
-GitHub (`plantuml`, `puml` and `wsd` languages, and blocks that contain
-`@startuml` / `@enduml`). The standalone `.puml` file view is GitHub only.
+## Permissions
 
-## Security & permissions
+No host permissions are requested at install time and there is no `tabs` permission. The extension declares:
 
-The extension requires **no host permissions at install time and no tabs API**.
-It declares three permissions:
+- `clipboardWrite` - only for the "Copy as bitmap" button
+- `storage` - only to remember which sites are turned on or off
+- `scripting` - only to register the content script on the sites you add
 
-- `clipboardWrite`, used solely by the user-triggered "Copy as bitmap" button
-  to put the rendered diagram on the clipboard.
-- `storage`, used only to remember which sites are turned on or off in the
-  [options page](#sites).
-- `scripting`, used only to register the content script on the sites you add
-  in the options page.
+The content script is scoped to `github.com`, `*.ghe.com` and `file://` pages. Any other site is an optional host permission that the browser asks for when you add the site, and that is given back when you remove it. The renderer page is web accessible to every site so that it can be embedded on the sites you add.
 
-Out of the box it ships a content script scoped to `github.com`, `*.ghe.com`
-(GitHub Enterprise Cloud) and local `file://` pages, and a packaged renderer
-page. Access to any other site is an *optional* host permission: the browser
-asks for it when you add that site in the options page, and removing the site
-gives it back. The renderer page is web accessible to every site, so that it
-can be embedded on the sites you add.
+The extension runs under the stock Manifest V3 Content Security Policy (essentially `script-src 'self'`), with no relaxation. Graph layout (class, component, deployment, state and use-case diagrams) is done by Smetana, PlantUML's built-in port of the Graphviz layout algorithms, compiled into the engine, so there is no WebAssembly module and no `'wasm-unsafe-eval'`.
 
-The extension also runs under the stock Manifest V3 Content Security Policy
-(essentially `script-src 'self'`), with no relaxation at all. Diagrams that
-need graph layout (**class, component, deployment, state, and use-case
-diagrams**) are laid out by **Smetana**, PlantUML's built-in port of the
-Graphviz layout algorithms, which is compiled into the same `plantuml.js`
-file as the rest of the engine. There is no WebAssembly module and no
-`'wasm-unsafe-eval'` directive in the manifest.
+The engine runs inside a sandboxed iframe with an opaque origin: no network access and no shared state with the host page.
 
-This matters beyond the extension itself: GitHub serves its own Mermaid
-renderer under a `script-src 'self'` CSP that blocks WebAssembly, so an
-engine that needs WASM could never be adopted natively. This one runs as a
-single JavaScript file under exactly that policy.
+## Build
 
-In short: the engine runs entirely inside a sandboxed iframe with an opaque
-origin, with no network access and no shared state with the host page.
+Requires Python 3.8+ (standard library only).
 
-## Testing without a real GitHub page
+```bash
+python build_zip.py      # -> plantuml-lens.zip, manifest.json at the root of the archive
+python fetch_stdlib.py   # refresh the bundled stdlib from https://plantuml.github.io/plantuml/js-plantuml/
+```
 
-To test quickly, create a new issue or discussion in any repo you own with this content:
+A release is created by pushing a tag that matches the version in `extension/manifest.json` (`git tag v0.4.0 && git push --tags`), the workflow in `.github/workflows/release.yml` builds the archive and publishes it.
+
+`extension/vendor/plantuml.js` is the vendored TeaVM-compiled engine, the top-level `extension/*.min.js` files are the stdlib bundles. The bundle list is kept in `fetch_stdlib.py`, `build_zip.py` and `extension/manifest.json` and has to stay in sync.
+
+## Testing
+
+Create an issue or a discussion in a repository you own with this content, save it and reload the page:
 
 ````markdown
 ```plantuml
@@ -101,54 +89,8 @@ Bob --> Alice: hi
 ```
 ````
 
-Save it, then reload the page. The diagram should appear.
-
-## Roadmap
-
-- [x] MVP: detect and render `plantuml` blocks
-- [X] Firefox support (Manifest V3 is now supported in Firefox)
-- [X] "Copy SVG" / "Copy source" buttons
-- [x] Theme matching (light/dark) — follows GitHub's color mode
-- [x] Support `puml` and `wsd` language aliases
-- [x] Detect untagged / AsciiDoc `[plantuml]` blocks via `@startuml`/`@enduml` sniffing
-- [x] Render standalone `.puml` / `.plantuml` / `.pu` / `.wsd` files
-- [x] Emoji (`<:1f600:>`), `!theme` and OpenIconic (`<&icon>`) support
-- [ ] Render `.puml` files in pull request diffs
-- [x] Options page: choose the sites where diagrams are rendered
-- [ ] Performance settings
-- [X] Chrome Web Store publication
-
-## Why this extension exists
-
-PlantUML support on GitHub has been requested for 4+ years:
-<https://github.com/orgs/community/discussions/10111>
-
-The main blocker was performance and infrastructure cost. With the TeaVM-compiled engine, **that blocker no longer exists**. This extension demonstrates that PlantUML can run natively on GitHub.com with zero server-side changes — using the exact same sandbox pattern GitHub uses for Mermaid.
-
-If you'd like to see this integrated natively, please **upvote the discussion**:
-<https://github.com/orgs/community/discussions/10111>
-
-## Installation for Chrome (developer mode)
-
-### Step 1 — Load the extension in Chrome
-
-1. Open `chrome://extensions/`
-2. Toggle **Developer mode** on (top-right)
-3. Click **Load unpacked**
-4. Select the `plantuml-for-github/` folder
-
-### Step 2 — Test it
-
-Visit any GitHub page containing a ` ```plantuml ` block, for example:
-
-- A README that uses PlantUML
-- An issue or PR comment with a `plantuml` fenced block
-- A `.puml` file in any repository
-
-You should see the diagram rendered inline, with a small "🌱 PlantUML (client-side render)" badge above it. Click the toggle button (the `<>` icon to the left of the badge) to switch to the original source view; click it again (it now shows an eye icon) to switch back to the diagram.
-
-
+`DEMO.md` and `DEMO-CLASS.md` contain more samples.
 
 ## License
 
-MIT
+MIT, see [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

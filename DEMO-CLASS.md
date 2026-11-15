@@ -1,4 +1,4 @@
-# PlantUML for GitHub
+# PlantUML Lens
 
 
 

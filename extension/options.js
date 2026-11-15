@@ -1,5 +1,5 @@
 // =====================================================================
-// PlantUML for GitHub - Options page
+// PlantUML Lens - Options page
 // =====================================================================
 // Manages the sites where the content script runs.
 //

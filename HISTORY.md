@@ -1,10 +1,10 @@
 # Changelog
 
-All notable changes to **PlantUML for GitHub** are documented here.
-The project is published as two browser extensions (Chrome and Firefox)
-that share the same version number from `0.2.2` onward.
+All notable changes to **PlantUML Lens** are documented here.
 
-## Unreleased
+## 0.4.0
+
+- **Renamed to PlantUML Lens** (was PlantUML for GitHub) and now a Chrome only extension: the Firefox build and the `template/` generator are gone, the extension source lives in `extension/`. The release asset is `plantuml-lens.zip`.
 
 - **Options page to manage the sites where diagrams are rendered.** The
   built-in sites (GitHub, GitHub Enterprise Cloud, local files) can be

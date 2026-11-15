@@ -1,13 +1,8 @@
-name: Release extension packages
+name: Release extension package
 
-# Triggered when a version tag is pushed (e.g. `git tag v0.2.4 && git push --tags`).
-# The job rebuilds Chrome/ and Firefox/ from template/, packages both ZIPs, and
-# publishes a GitHub Release with the two archives as assets.
-#
-# The tag/version check only applies to the Chrome build: Chrome/manifest.json
-# must match the pushed tag. The Firefox build is allowed to lag behind (its
-# own version is read from Firefox/manifest.json separately below), so a
-# Chrome-only release doesn't require bumping Firefox in lockstep.
+# Triggered when a version tag is pushed (e.g. `git tag v0.4.0 && git push --tags`).
+# The job packages extension/ into plantuml-lens.zip and publishes a GitHub
+# Release with the archive as the asset.
 on:
   push:
     tags:
@@ -41,61 +36,30 @@ jobs:
           echo "version=${version}"  >> "$GITHUB_OUTPUT"
           echo "Tag: ${tag}  ->  version: ${version}"
 
-      # Regenerate Chrome/ and Firefox/ from template/ so the published ZIPs
-      # always reflect the template, regardless of what's committed under
-      # Chrome/ and Firefox/ at HEAD. We do this BEFORE the version check
-      # because template/manifest.json is a preprocessed template (it
-      # contains #if CHROME / #if FIREFOX directives) and isn't valid JSON
-      # on its own -- only the generated Chrome/manifest.json is.
-      - name: Generate Chrome/ and Firefox/ from template/
-        run: python template.py
-
-      # Safety net: refuse to build if the manifest version doesn't match the
-      # tag. Without this, you could push `v0.2.5` while manifest.json is still
-      # at 0.2.4 and end up with ZIPs named `...-0.2.4.zip` under a `v0.2.5`
-      # release, which is confusing for everyone.
+      # Safety net: refuse to build if the manifest version doesn't match the tag.
       - name: Verify manifest version matches tag
         run: |
           set -e
-          manifest_version=$(python -c "import json; print(json.load(open('Chrome/manifest.json'))['version'])")
+          manifest_version=$(python -c "import json; print(json.load(open('extension/manifest.json'))['version'])")
           expected="${{ steps.tag.outputs.version }}"
-          echo "Chrome/manifest.json version: ${manifest_version}"
-          echo "tag version:                  ${expected}"
+          echo "manifest.json version: ${manifest_version}"
+          echo "tag version:           ${expected}"
           if [ "${manifest_version}" != "${expected}" ]; then
-            echo "::error::Version mismatch -- update template/manifest.json to ${expected} before tagging."
+            echo "::error::Version mismatch -- update extension/manifest.json to ${expected} before tagging."
             exit 1
           fi
 
-      # Firefox is allowed to release on its own schedule/version, independent
-      # of the tag driving this workflow (see comment at the top of this file).
-      # Read its actual version from Firefox/manifest.json rather than assuming
-      # it matches the tag, so a Chrome-only release doesn't require Firefox to
-      # be bumped in lockstep.
-      - name: Read Firefox manifest version
-        id: firefox
-        run: |
-          firefox_version=$(python -c "import json; print(json.load(open('Firefox/manifest.json'))['version'])")
-          echo "version=${firefox_version}" >> "$GITHUB_OUTPUT"
-          echo "Firefox/manifest.json version: ${firefox_version}"
-
-      - name: Build Chrome ZIP
-        run: python build_zip_chrome.py
-
-      - name: Build Firefox ZIP
-        run: python build_zip_firefox.py
+      - name: Build ZIP
+        run: python build_zip.py
 
       # Pull the matching section out of HISTORY.md so the release page shows
-      # the same changelog entry the user already wrote. Falls back to a
-      # generic note if the section is missing.
+      # the same changelog entry. Falls back to a generic note if missing.
       - name: Extract release notes from HISTORY.md
-        id: notes
         run: |
           python <<'PY' > release_notes.md
           import re, pathlib, sys
           version = "${{ steps.tag.outputs.version }}"
           text = pathlib.Path("HISTORY.md").read_text(encoding="utf-8")
-          # Match `## <version>` up to (but excluding) the next `## ` heading
-          # or end-of-file. Anchored at start-of-line, multiline mode.
           pattern = rf"^##\s+{re.escape(version)}\s*\n(.*?)(?=^##\s|\Z)"
           m = re.search(pattern, text, flags=re.MULTILINE | re.DOTALL)
           if m:
@@ -103,26 +67,13 @@ jobs:
           else:
               sys.stdout.write(f"Release {version}.\n")
           PY
-          echo "----- release_notes.md -----"
           cat release_notes.md
-          echo "----------------------------"
 
-      # `gh` is preinstalled on GitHub-hosted runners and uses GITHUB_TOKEN
-      # automatically. The Chrome ZIP filename uses the tag version (verified
-      # above to match Chrome/manifest.json); the Firefox ZIP filename uses
-      # Firefox's own manifest version, which may differ from the tag when
-      # only Chrome is being released.
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          tag="${{ steps.tag.outputs.tag }}"
-          chrome_version="${{ steps.tag.outputs.version }}"
-          firefox_version="${{ steps.firefox.outputs.version }}"
-          echo "Chrome asset version:  ${chrome_version}"
-          echo "Firefox asset version: ${firefox_version}"
-          gh release create "${tag}" \
-            --title "${tag}" \
+          gh release create "${{ steps.tag.outputs.tag }}" \
+            --title "${{ steps.tag.outputs.tag }}" \
             --notes-file release_notes.md \
-            "plantuml-for-github-chrome-${chrome_version}.zip" \
-            "plantuml-for-github-firefox-${firefox_version}.zip"
+            plantuml-lens.zip

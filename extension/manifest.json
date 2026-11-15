@@ -1,20 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "PlantUML for GitHub",
-  "version": "0.3.2",
-  "description": "Renders plantuml code blocks directly on GitHub pages using the client-side TeaVM-compiled PlantUML engine.",
-  "author": "Arnaud Roques",
-  "homepage_url": "https://github.com/plantuml/plantuml",
+  "name": "PlantUML Lens",
+  "version": "0.4.0",
+  "description": "Renders plantuml code blocks on GitHub, local files and sites you add, entirely in the browser with a client-side PlantUML engine.",
+  "author": "cjw129",
+  "homepage_url": "https://github.com/cjw129/plantuml-lens",
 
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "plantuml-for-github@plantuml.com",
-      "strict_min_version": "140.0",
-      "data_collection_permissions": {
-        "required": ["none"]
-      }
-    }
-  },
 
   "icons": {
     "16": "icons/icon16.png",
@@ -39,10 +30,7 @@
       "resources": [
         "renderer.html",
         "renderer.js",
-        "vendor/plantuml.0.js",
-        "vendor/plantuml.1.js",
-        "vendor/plantuml.2.js",
-        "vendor/plantuml.3.js",
+        "vendor/plantuml.js",
         "adaml.min.js",
         "archimate.min.js",
         "azure.min.js",
@@ -64,6 +52,15 @@
         "bootstrap1.13.1.min.js",
         "office.min.js",
         "osa.min.js",
+        "awslib.min.js",
+        "awslib14.min.js",
+        "awslib20.min.js",
+        "ibm.min.js",
+        "logos.min.js",
+        "material.min.js",
+        "material2.min.js",
+        "material2.1.19.min.js",
+        "tupadr3.min.js",
         "emoji.js",
         "themes.js",
         "openiconic.js"
@@ -74,7 +71,7 @@
 
   "permissions": ["clipboardWrite", "storage", "scripting"],
 
-  "optional_permissions": ["*://*/*"],
+  "optional_host_permissions": ["*://*/*"],
 
   "options_ui": {
     "page": "options.html",

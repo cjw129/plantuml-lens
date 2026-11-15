@@ -1,5 +1,5 @@
 // =====================================================================
-// PlantUML for GitHub - Content Script
+// PlantUML Lens - Content Script
 // =====================================================================
 // Runs on every github.com and *.ghe.com (GitHub Enterprise Cloud) page. Detects ```plantuml code blocks and
 // replaces them with a sandboxed iframe that renders the diagram
@@ -31,7 +31,7 @@
   TRACE('RENDERER_URL =', RENDERER_URL, '| RENDERER_ORIGIN =', RENDERER_ORIGIN);
 
   // Marker class so we don't re-process the same block twice.
-  const PROCESSED_CLASS = 'plantuml-for-github-processed';
+  const PROCESSED_CLASS = 'plantuml-lens-processed';
 
   // ------------------------------------------------------------------
   // Detect dark mode from GitHub's <html data-color-mode> attribute.
@@ -246,7 +246,7 @@
     const t = dark ? THEME.dark : THEME.light;
 
     const wrapper = document.createElement('div');
-    wrapper.className = 'plantuml-for-github-wrapper';
+    wrapper.className = 'plantuml-lens-wrapper';
     wrapper.style.cssText =
       'margin: 16px 0; padding: 0; ' +
       'border: 1px solid ' + t.borderCol + '; ' +
@@ -268,7 +268,7 @@
     // shows the action the user can take next ("view source" = code icon).
     const toggleBtn = document.createElement('button');
     toggleBtn.type = 'button';
-    toggleBtn.className = 'plantuml-for-github-toggle';
+    toggleBtn.className = 'plantuml-lens-toggle';
     toggleBtn.setAttribute('aria-label', 'Show source');
     toggleBtn.title = 'Show source';
     toggleBtn.style.cssText =
@@ -317,7 +317,7 @@
     // resulting blob to the clipboard from this content-script context.
     const bitmapBtn = document.createElement('button');
     bitmapBtn.type = 'button';
-    bitmapBtn.className = 'plantuml-for-github-copy-bitmap';
+    bitmapBtn.className = 'plantuml-lens-copy-bitmap';
     bitmapBtn.setAttribute('aria-label', 'Copy diagram as bitmap');
     bitmapBtn.title = 'Copy diagram as bitmap';
     bitmapBtn.style.cssText =
@@ -339,7 +339,7 @@
     // modal; the actual editor will be wired up later.
     const editBtn = document.createElement('button');
     editBtn.type = 'button';
-    editBtn.className = 'plantuml-for-github-edit-draft';
+    editBtn.className = 'plantuml-lens-edit-draft';
     editBtn.setAttribute('aria-label', 'Edit as draft');
     editBtn.title = 'Edit as draft';
     editBtn.style.cssText =
@@ -368,16 +368,7 @@
 
     const iframe = document.createElement('iframe');
     iframe.src = RENDERER_URL;
-#if CHROME
     iframe.sandbox = 'allow-scripts';
-#endif
-#if FIREFOX
-    // No sandbox attribute: Firefox treats sandboxed iframes loading
-    // moz-extension:// pages with a nullprincipal origin, which prevents
-    // ES module loading. The iframe is already isolated from github.com
-    // because it lives on a different origin (moz-extension:// or
-    // chrome-extension://).
-#endif
     iframe.dataset.requestId = requestId;
     iframe.style.cssText =
       'border: none; width: 100%; min-height: 60px; display: block; background: transparent;';
@@ -660,7 +651,7 @@
 
       // Backdrop covers the whole viewport and dims the page behind.
       const backdrop = document.createElement('div');
-      backdrop.className = 'plantuml-for-github-edit-backdrop';
+      backdrop.className = 'plantuml-lens-edit-backdrop';
       backdrop.style.cssText =
         'position: fixed; inset: 0; z-index: 2147483647; ' +
         'background: rgba(0, 0, 0, 0.5); ' +
@@ -693,7 +684,7 @@
       // main wrapper's iframe.
       const modalBitmapBtn = document.createElement('button');
       modalBitmapBtn.type = 'button';
-      modalBitmapBtn.className = 'plantuml-for-github-modal-copy-bitmap';
+      modalBitmapBtn.className = 'plantuml-lens-modal-copy-bitmap';
       modalBitmapBtn.setAttribute('aria-label', 'Copy diagram as bitmap');
       modalBitmapBtn.title = 'Copy diagram as bitmap';
       modalBitmapBtn.style.cssText =
@@ -786,12 +777,7 @@
 
       const draftRenderer = document.createElement('iframe');
       draftRenderer.src = RENDERER_URL;
-#if CHROME
       draftRenderer.sandbox = 'allow-scripts';
-#endif
-#if FIREFOX
-      // No sandbox attribute: same rationale as the inline iframe above.
-#endif
       draftRenderer.style.cssText =
         'flex: 1; width: 100%; height: 100%; ' +
         'border: none; display: block; background: ' + t.iframeBg + ';';
@@ -1150,7 +1136,7 @@
   const PUML_FILE_EXTENSIONS = ['.puml', '.plantuml', '.pu', '.wsd'];
 
   // Marker class for the elements we create on the file view.
-  const BLOB_SOURCE_CLASS = 'plantuml-for-github-blob-source';
+  const BLOB_SOURCE_CLASS = 'plantuml-lens-blob-source';
 
   // How long to keep showing the previous diagram when the URL changed to
   // another PlantUML file but the textarea still holds the old content.
@@ -1160,11 +1146,11 @@
   // !important (rather than an inline style) so that a React re-render
   // resetting the element's style cannot bring the code back; the class
   // itself is re-applied on every sync in case React resets className.
-  const BLOB_HIDDEN_CLASS = 'plantuml-for-github-hidden';
+  const BLOB_HIDDEN_CLASS = 'plantuml-lens-hidden';
   function ensureBlobStyle() {
-    if (document.getElementById('plantuml-for-github-blob-style')) return;
+    if (document.getElementById('plantuml-lens-blob-style')) return;
     const style = document.createElement('style');
-    style.id = 'plantuml-for-github-blob-style';
+    style.id = 'plantuml-lens-blob-style';
     style.textContent = '.' + BLOB_HIDDEN_CLASS + ' { display: none !important; }';
     (document.head || document.documentElement).appendChild(style);
   }
@@ -1281,7 +1267,7 @@
     processBlock(pre);
 
     const wrapper = pre.parentNode;
-    if (!wrapper || !wrapper.classList.contains('plantuml-for-github-wrapper')) {
+    if (!wrapper || !wrapper.classList.contains('plantuml-lens-wrapper')) {
       // processBlock bailed out (empty source): undo.
       pre.remove();
       return;
@@ -1311,7 +1297,7 @@
     // we show GitHub's own code view instead, which is richer. This
     // listener is registered after processBlock's, so it runs second and
     // just mirrors the state it left.
-    const toggleBtn = wrapper.querySelector('.plantuml-for-github-toggle');
+    const toggleBtn = wrapper.querySelector('.plantuml-lens-toggle');
     if (toggleBtn) {
       toggleBtn.addEventListener('click', () => {
         const showingSource = pre.style.display !== 'none';

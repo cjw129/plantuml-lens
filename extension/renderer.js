@@ -1,5 +1,5 @@
 // =====================================================================
-// PlantUML for GitHub - Renderer (sandbox iframe)
+// PlantUML Lens - Renderer (sandbox iframe)
 // =====================================================================
 // Runs inside the sandboxed iframe. Loads the TeaVM-compiled PlantUML
 // engine, listens for PLANTUML_RENDER messages from the parent page,
