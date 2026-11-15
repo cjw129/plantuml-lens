@@ -73,6 +73,10 @@
 
   "optional_host_permissions": ["*://*/*"],
 
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none'"
+  },
+
   "options_ui": {
     "page": "options.html",
     "open_in_tab": true

@@ -2,6 +2,10 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <!-- The engine needs no network: a diagram must not be able to load or
+       request anything from a remote host (tracking pixels, !includeurl). -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>PlantUML Renderer</title>
   <style>
     html, body {

@@ -26,6 +26,10 @@ TRACE('output element =', output);
 // from our perspective. We protect ourselves by validating the message
 // shape and only ever responding to event.source / event.origin.
 window.addEventListener('message', (event) => {
+  // Only the page that embeds this renderer drives it.
+  if (event.source !== window.parent) {
+    return;
+  }
   const data = event.data;
   // Trace EVERY message that lands on this iframe, even ones we ignore.
   TRACE('window.message fired, origin=' + event.origin +

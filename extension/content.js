@@ -418,6 +418,17 @@
   }
 
   // ------------------------------------------------------------------
+  // True when `source` is the window of a renderer iframe in this page.
+  // ------------------------------------------------------------------
+  function isRendererFrame(source) {
+    if (!source) return false;
+    for (const frame of document.querySelectorAll('iframe')) {
+      if (frame.contentWindow === source && frame.src === RENDERER_URL) return true;
+    }
+    return false;
+  }
+
+  // ------------------------------------------------------------------
   // "Copy as SVG" -- request the SVG string from the given iframe and
   // write it to the clipboard as text/plain. Silent on success/failure;
   // errors are only logged. Used by the renderer's context menu.
@@ -1021,8 +1032,13 @@
             (data.type === 'PLANTUML_CTX_MENU_ACTION' ? ' action=' + data.action : ''));
     }
 
-    // Only accept messages from our own renderer origin.
+    // Only accept messages from the renderer frames this script created. The
+    // sandboxed renderer has an opaque origin ("null"), which any other
+    // sandboxed frame on the page shares, so the origin alone proves nothing:
+    // without this check such a frame could answer a pending "Copy as SVG"
+    // with its own content or resize our frames.
     if (event.origin !== RENDERER_ORIGIN && event.origin !== 'null') return;
+    if (!isRendererFrame(event.source)) return;
 
     if (!data || typeof data !== 'object') return;
 
