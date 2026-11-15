@@ -42,6 +42,8 @@ FILES = {
     "icons/icon48.png":      EXT_DIR / "icons" / "icon48.png",
     "icons/icon128.png":     EXT_DIR / "icons" / "icon128.png",
     "vendor/plantuml.js":    EXT_DIR / "vendor" / "plantuml.js",
+    "LICENSE":              ROOT / "LICENSE",
+    "THIRD_PARTY_NOTICES.md": ROOT / "THIRD_PARTY_NOTICES.md",
 }
 
 # Standard-library bundles the engine lazy-loads for `!include <lib/...>`.
